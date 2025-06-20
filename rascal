@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# make sure we have openjdk installed
+if [[ ! -f /opt/homebrew/opt/openjdk/bin/java ]]
+then
+  echo "please install openjdk with this command:"
+  echo "brew install openjdk"
+fi
+
+# let's make sure we have the github cli
+if [[ ! -d /opt/homebrew/opt/gh ]]
+then
+  echo "please run these commands to set up the github cli:"
+  echo "brew install gh"
+  echo "gh login"
+  exit 1
+fi
+
+# let's make sure we have the rasccal jar
+if [[ -z "$(find ~/.rascal -type f -regex ".*[0-9].jar")" ]]
+then
+  echo "test"
+
+  mkdir -p ~/.rascal
+
+  # invocation should be something like this
+  gh release download -R github.com/usethesource/rascal --pattern "*[0-9].jar" -D ~/.rascal/
+
+fi
+
+
+fileFound=""
+
+if [[ -f $1 ]]
+then
+  fileFound="$1"
+fi
+
+if [[ -f "${1}.rsc" ]]
+then
+  fileFound="${1}.rsc"
+fi
+
+if [[ ! -z "$fileFound" ]]
+then
+  module=`head -n 1 $fileFound | sed 's/module *//'`
+  if [[ -z $module ]]
+  then
+    echo "no module declared in source file"
+    
+    exit 1
+  fi
+
+  tmpDir=`mktemp -d`
+
+  mkdir $tmpDir/META-INF
+
+  echo "Project-Name: convenientRascal" > $tmpDir/META-INF/RASCAL.MF
+  echo "Source: src/$module/rascal" >> $tmpDir/META-INF/RASCAL.MF
+
+  mkdir -p $tmpDir/src/$module/rascal
+
+  cp $fileFound $tmpDir/src/$module/rascal/
+
+
+  cd $tmpDir
+  /opt/homebrew/opt/openjdk/bin/java -jar ~/.rascal/rascal-*.jar $fileFound ${@:2}
+
+  exit 0 
+fi
+
+/opt/homebrew/opt/openjdk/bin/java -jar ~/.rascal/rascal-*.jar $@
