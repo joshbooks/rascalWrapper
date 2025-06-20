@@ -7,3 +7,5 @@ of only that file invoked with the ramianing arguments
 if invoked without a valid rascal file as the first argument
 the rascal command will run the rascal interpreter with any
 arguments that were supplied
+
+Caveat: currently only supports mac
